@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Absen Digital - SMKS Wahidin Kota Cirebon</title>
+    <title>Absen Digital - X RPL 1 SMKS Wahidin Kota Cirebon</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
@@ -20,293 +20,286 @@
             0%, 100% { opacity: 0; transform: translateY(-10px); }
             50% { opacity: 1; transform: translateY(0); }
         }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-        .animate-shake {
-            animation: shake 0.5s ease-in-out;
-        }
     </style>
 </head>
 <body class="bg-gray-50">
-
-    <div id="loginScreen" class="fixed inset-0 gradient-bg flex items-center justify-center z-50">
-        <div id="loginCard" class="bg-white rounded-xl card-shadow p-8 w-full max-w-sm mx-4 text-center">
-            <h1 class="text-3xl font-bold mb-2 text-gray-800">LOGIN ABSENSI KELAS X RPL 1</h1>
-            <p class="text-gray-500 mb-6">SMKS Wahidin Kota Cirebon</p>
-            <form id="loginForm" class="space-y-4">
-                <input type="text" id="username" placeholder="Username" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
-                <input type="password" id="password" placeholder="Password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
-                <button type="submit" class="w-full btn-primary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
-                    Masuk
-                </button>
-            </form>
-            <p id="loginError" class="text-red-500 mt-4 text-sm hidden">Username atau password salah!</p>
+    <!-- Header -->
+    <div class="gradient-bg text-white py-6 mb-8">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold mb-2">ABSEN DIGITAL X RPL</h1>
+                <h2 class="text-2xl font-semibold mb-1">SMKS WAHIDIN KOTA CIREBON</h2>
+                <p class="text-lg opacity-90">Sistem Absensi Siswa Terintegrasi</p>
+            </div>
         </div>
     </div>
 
-    <div id="mainAppContainer" class="hidden">
-        <div class="gradient-bg text-white py-6 mb-8 relative">
-            <div class="container mx-auto px-4">
-                <div class="absolute top-4 right-4">
-                    <button onclick="handleLogout()" class="bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-300 text-sm">
-                        Logout
-                    </button>
-                </div>
-                <div class="text-center">
-                    <h1 class="text-4xl font-bold mb-2">ABSEN DIGITAL X RPL</h1>
-                    <h2 class="text-2xl font-semibold mb-1">SMKS WAHIDIN KOTA CIREBON</h2>
-                    <p class="text-lg opacity-90">Sistem Absensi Siswa Terintegrasi</p>
-                </div>
-            </div>
+    <!-- Navigation -->
+    <div class="container mx-auto px-4 mb-6">
+        <div class="flex justify-center space-x-4">
+            <button onclick="showPage('absen')" id="btnAbsen" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                Halaman Absen
+            </button>
+            <button onclick="showPage('rekap')" id="btnRekap" class="bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                Rekapan Kehadiran
+            </button>
         </div>
+    </div>
 
-        <div class="container mx-auto px-4 mb-6">
-            <div class="flex justify-center space-x-4">
-                <button onclick="showPage('absen')" id="btnAbsen" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
-                    Halaman Absen
-                </button>
-                <button onclick="showPage('rekap')" id="btnRekap" class="bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
-                    Rekapan Kehadiran
-                </button>
-            </div>
-        </div>
+    <!-- Saved Indicator -->
+    <div id="savedIndicator" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg font-semibold saved-indicator hidden z-50">
+        Absen berhasil disimpan!
+    </div>
 
-        <div id="savedIndicator" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg font-semibold saved-indicator hidden z-50">
-            Absen berhasil disimpan!
-        </div>
-
-        <div id="pageAbsen" class="container mx-auto px-4">
-            <div class="bg-white rounded-xl card-shadow p-6 mb-6">
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-4">Informasi Guru</h3>
-                        <div class="space-y-2">
-                            <p><span class="font-semibold">Nama Wali Kelas:</span> Ibu Aya</p>
-                            <p><span class="font-semibold">Kelas:</span> X RPL 1</p>
-                            <p><span class="font-semibold">Tanggal:</span> <span id="currentDate"></span></p>
-                            <input type="date" id="rekapTanggal" />
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-4">Kelas Tersedia</h3>
-                        <select id="kelasSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <option value="">Pilih Kelas</option>
-                            <option value="X RPL 1">X RPL 1</option>
-                        </select>
+    <!-- Page 1: Absen -->
+    <div id="pageAbsen" class="container mx-auto px-4">
+        <!-- Teacher Info Card -->
+        <div class="bg-white rounded-xl card-shadow p-6 mb-6">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Informasi Guru</h3>
+                    <div class="space-y-2">
+                        <p><span class="font-semibold">Nama Wali Kelas:</span> Ibu Aya</p>
+                        <p><span class="font-semibold">Kelas:</span> X RPL 1</p>
+                        <p><span class="font-semibold">Tanggal:</span> <span id="currentDate"></span></p>
+                        <input type="date" id="rekapTanggal" />
                     </div>
                 </div>
-            </div>
-
-            <div id="controlButtons" class="bg-white rounded-xl card-shadow p-6 mb-6 hidden">
-                <div class="flex flex-wrap gap-4 justify-center">
-                    <button onclick="hadirSemua()" class="btn-success text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
-                        Hadir Semua
-                    </button>
-                    <button onclick="saveAbsen()" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
-                        Simpan Absen
-                    </button>
-                    <button onclick="exportToExcel()" class="btn-warning text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
-                        Ekspor ke Excel
-                    </button>
-                    <button onclick="showAddStudentModal()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
-                        Tambah Siswa
-                    </button>
-                    <button onclick="showImportModal()" class="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
-                        Import Excel
-                    </button>
-                </div>
-            </div>
-
-            <div id="studentTable" class="bg-white rounded-xl card-shadow p-6 hidden">
-                <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center" id="kelasTitle">Daftar Siswa</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full table-auto">
-                        <thead>
-                            <tr class="bg-gray-100">
-                                <th class="px-4 py-3 text-left font-semibold">No</th>
-                                <th class="px-4 py-3 text-left font-semibold">Nama Siswa</th>
-                                <th class="px-4 py-3 text-left font-semibold">NIS</th>
-                                <th class="px-4 py-3 text-center font-semibold">Hadir</th>
-                                <th class="px-4 py-3 text-center font-semibold">Izin</th>
-                                <th class="px-4 py-3 text-center font-semibold">Sakit</th>
-                                <th class="px-4 py-3 text-center font-semibold">Absen</th>
-                                <th class="px-4 py-3 text-left font-semibold">Keterangan</th>
-                                <th class="px-4 py-3 text-center font-semibold">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="studentTableBody">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div id="pageRekap" class="container mx-auto px-4 hidden ">
-            <div class="bg-white rounded-xl card-shadow p-6">
-                <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Rekapan Kehadiran Siswa</h3>
-                
-                <div class="flex flex-wrap gap-4 mb-6 justify-center">
-                    <select id="rekapKelas" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full sm:w-auto">
-                        <option value="">Semua Kelas</option>
-                        <option value="X RPL 1">X RPL 1</option>
-                    </select>
-
-                    <input type="date" id="rekapTanggalAwal" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full sm:w-auto">
-                    <input type="date" id="rekapTanggalAkhir" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full sm:w-auto">
-
-                    <select id="rekapBulan" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full sm:w-auto">
-                        <option value="">Pilih Bulan</option>
-                        <option value="01">Januari</option>
-                        <option value="02">Februari</option>
-                        <option value="03">Maret</option>
-                        <option value="04">April</option>
-                        <option value="05">Mei</option>
-                        <option value="06">Juni</option>
-                        <option value="07">Juli</option>
-                        <option value="08">Agustus</option>
-                        <option value="09">September</option>
-                        <option value="10">Oktober</option>
-                        <option value="11">November</option>
-                        <option value="12">Desember</option>
-                    </select>
-                    </div>
-
-            </div>
-
-                <div class="flex flex-wrap gap-4 justify-center mb-6">
-                    <button onclick="filterRekap()" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
-                        Filter Data
-                    </button>
-                    <button onclick="printRekap()" class="btn-success text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
-                        Cetak Rekap
-                    </button>
-                    <button onclick="exportRekapToExcel()" class="btn-warning text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
-                        Ekspor Rekap
-                    </button>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full table-auto">
-                        <thead>
-                            <tr class="bg-gray-100">
-                                <th class="px-4 py-3 text-left font-semibold">No</th>
-                                <th class="px-4 py-3 text-left font-semibold">Nama Siswa</th>
-                                <th class="px-4 py-3 text-left font-semibold">Kelas</th>
-                                <th class="px-4 py-3 text-left font-semibold">NIS</th>
-                                <th class="px-4 py-3 text-center font-semibold">Tanggal</th>
-                                <th class="px-4 py-3 text-center font-semibold">Status</th>
-                                <th class="px-4 py-3 text-left font-semibold">Keterangan</th>
-                            </tr>
-                        </thead>
-                        <tbody id="rekapTableBody">
-                            <tr>
-                                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
-                                    Pilih filter dan klik "Filter Data" untuk melihat rekapan kehadiran
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div id="addStudentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-            <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-                <h3 class="text-xl font-bold mb-4">➕ Tambah Siswa Baru</h3>
-                <div class="space-y-4">
-                    <input type="text" id="newStudentName" placeholder="Nama Siswa" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                    <input type="text" id="newStudentNIS" placeholder="NIS" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                    <select id="newStudentClass" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Kelas Tersedia</h3>
+                    <select id="kelasSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <option value="">Pilih Kelas</option>
                         <option value="X RPL 1">X RPL 1</option>
                     </select>
                 </div>
-                <div class="flex gap-4 mt-6">
-                    <button onclick="addNewStudent()" class="btn-success text-white px-4 py-2 rounded-lg font-semibold flex-1">
-                        Tambah
-                    </button>
-                    <button onclick="closeAddStudentModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg font-semibold flex-1">
-                        Batal
-                    </button>
-                </div>
             </div>
         </div>
 
-        <div id="importModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-            <div class="bg-white rounded-xl p-6 w-full max-w-lg mx-4">
-                <h3 class="text-xl font-bold mb-4">📥 Import Data Siswa dari Excel</h3>
-                <div class="bg-blue-50 p-4 rounded-lg mb-4">
-                    <h4 class="font-semibold mb-2">📄 Petunjuk Import:</h4>
-                    <ul class="text-sm space-y-1">
-                        <li>File harus berformat .xlsx atau .xls</li>
-                        <li>Kolom A: Nama Siswa</li>
-                        <li>Kolom B: NIS</li>
-                        <li>Kolom C: Kelas</li>
-                        <li>Baris pertama adalah header</li>
-                    </ul>
-                </div>
-                <input type="file" id="excelFile" accept=".xlsx,.xls" class="w-full p-3 border border-gray-300 rounded-lg mb-4">
-                <div class="flex gap-4">
-                    <button onclick="importFromExcel()" class="btn-success text-white px-4 py-2 rounded-lg font-semibold flex-1">
-                        Import
-                    </button>
-                    <button onclick="closeImportModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg font-semibold flex-1">
-                        Batal
-                    </button>
-                </div>
+        <!-- Control Buttons -->
+        <div id="controlButtons" class="bg-white rounded-xl card-shadow p-6 mb-6 hidden">
+            <div class="flex flex-wrap gap-4 justify-center">
+                <button onclick="hadirSemua()" class="btn-success text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                    Hadir Semua
+                </button>
+                <button onclick="saveAbsen()" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                    Simpan Absen
+                </button>
+                <button onclick="exportToExcel()" class="btn-warning text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                    Ekspor ke Excel
+                </button>
+                <button onclick="showAddStudentModal()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                    Tambah Siswa
+                </button>
+                <button onclick="showImportModal()" class="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                    Import Excel
+                </button>
+            </div>
+        </div>
+
+        <!-- Student Table -->
+        <div id="studentTable" class="bg-white rounded-xl card-shadow p-6 hidden">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center" id="kelasTitle">Daftar Siswa</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="px-4 py-3 text-left font-semibold">No</th>
+                            <th class="px-4 py-3 text-left font-semibold">Nama Siswa</th>
+                            <th class="px-4 py-3 text-left font-semibold">NIS</th>
+                            <th class="px-4 py-3 text-center font-semibold">Hadir</th>
+                            <th class="px-4 py-3 text-center font-semibold">Izin</th>
+                            <th class="px-4 py-3 text-center font-semibold">Sakit</th>
+                            <th class="px-4 py-3 text-center font-semibold">Absen</th>
+                            <th class="px-4 py-3 text-left font-semibold">Keterangan</th>
+                            <th class="px-4 py-3 text-center font-semibold">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody">
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
+    <!-- Page 2: Rekap -->
+    <div id="pageRekap" class="container mx-auto px-4 hidden ">
+        <div class="bg-white rounded-xl card-shadow p-6">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Rekapan Kehadiran Siswa</h3>
+            
+            <!-- Filter Controls -->
+                <div class="flex flex-wrap gap-4 mb-6 justify-center">
+                <select id="rekapKelas" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full sm:w-auto">
+                    <option value="">Semua Kelas</option>
+                    <option value="X RPL 1">X RPL 1</option>
+                </select>
+
+                <input type="date" id="rekapTanggalAwal" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full sm:w-auto">
+                <input type="date" id="rekapTanggalAkhir" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full sm:w-auto">
+
+                <select id="rekapBulan" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full sm:w-auto">
+                    <option value="">Pilih Bulan</option>
+                    <option value="01">Januari</option>
+                    <option value="02">Februari</option>
+                    <option value="03">Maret</option>
+                    <option value="04">April</option>
+                    <option value="05">Mei</option>
+                    <option value="06">Juni</option>
+                    <option value="07">Juli</option>
+                    <option value="08">Agustus</option>
+                    <option value="09">September</option>
+                    <option value="10">Oktober</option>
+                    <option value="11">November</option>
+                    <option value="12">Desember</option>
+                </select>
+                </div>
+
+        </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-4 justify-center mb-6">
+                <button onclick="filterRekap()" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                    Filter Data
+                </button>
+                <button onclick="printRekap()" class="btn-success text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                    Cetak Rekap
+                </button>
+                <button onclick="exportRekapToExcel()" class="btn-warning text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                    Ekspor Rekap
+                </button>
+            </div>
+
+            <!-- Rekap Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="px-4 py-3 text-left font-semibold">No</th>
+                            <th class="px-4 py-3 text-left font-semibold">Nama Siswa</th>
+                            <th class="px-4 py-3 text-left font-semibold">Kelas</th>
+                            <th class="px-4 py-3 text-left font-semibold">NIS</th>
+                            <th class="px-4 py-3 text-center font-semibold">Tanggal</th>
+                            <th class="px-4 py-3 text-center font-semibold">Status</th>
+                            <th class="px-4 py-3 text-left font-semibold">Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rekapTableBody">
+                        <tr>
+                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                Pilih filter dan klik "Filter Data" untuk melihat rekapan kehadiran
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div id="addStudentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <h3 class="text-xl font-bold mb-4">âž• Tambah Siswa Baru</h3>
+            <div class="space-y-4">
+                <input type="text" id="newStudentName" placeholder="Nama Siswa" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="newStudentNIS" placeholder="NIS" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <select id="newStudentClass" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">Pilih Kelas</option>
+                    <option value="X RPL 1">X RPL 1</option>
+                </select>
+            </div>
+            <div class="flex gap-4 mt-6">
+                <button onclick="addNewStudent()" class="btn-success text-white px-4 py-2 rounded-lg font-semibold flex-1">
+                    Tambah
+                </button>
+                <button onclick="closeAddStudentModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg font-semibold flex-1">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="importModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-lg mx-4">
+            <h3 class="text-xl font-bold mb-4">ðŸ“¥ Import Data Siswa dari Excel</h3>
+            <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                <h4 class="font-semibold mb-2">ðŸ“‹ Petunjuk Import:</h4>
+                <ul class="text-sm space-y-1">
+                    <li>File harus berformat .xlsx atau .xls</li>
+                    <li>Kolom A: Nama Siswa</li>
+                    <li>Kolom B: NIS</li>
+                    <li>Kolom C: Kelas</li>
+                    <li>Baris pertama adalah header</li>
+                </ul>
+            </div>
+            <input type="file" id="excelFile" accept=".xlsx,.xls" class="w-full p-3 border border-gray-300 rounded-lg mb-4">
+            <div class="flex gap-4">
+                <button onclick="importFromExcel()" class="btn-success text-white px-4 py-2 rounded-lg font-semibold flex-1">
+                    Import
+                </button>
+                <button onclick="closeImportModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg font-semibold flex-1">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // ======================= LOGIKA LOGIN & LOGOUT =======================
-        document.getElementById('loginForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Mencegah halaman refresh
-            handleLogin();
-        });
-
-        function handleLogin() {
-            const usernameInput = document.getElementById('username').value;
-            const passwordInput = document.getElementById('password').value;
-            const loginError = document.getElementById('loginError');
-            const loginCard = document.getElementById('loginCard');
-
-            // Cek kredensial
-            if (usernameInput === 'siswa' && passwordInput === 'siswa2025') {
-                // Jika berhasil
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('mainAppContainer').classList.remove('hidden');
-            } else {
-                // Jika gagal
-                loginError.classList.remove('hidden');
-                loginCard.classList.add('animate-shake');
-                setTimeout(() => {
-                    loginCard.classList.remove('animate-shake');
-                }, 500);
-            }
-        }
-
-        function handleLogout() {
-            // Sembunyikan konten utama
-            document.getElementById('mainAppContainer').classList.add('hidden');
-            // Tampilkan kembali layar login
-            document.getElementById('loginScreen').classList.remove('hidden');
-            // Kosongkan field password dan sembunyikan error
-            document.getElementById('password').value = '';
-            document.getElementById('loginError').classList.add('hidden');
-        }
-
-
-        // ======================= LOGIKA APLIKASI ABSENSI =======================
         // Data siswa
         const studentsData = {
             "X RPL 1": [
-                {nama: "ABDILLAH NUR SYECHAN", nis: "252610001"}, {nama: "ADLIAN FIRMANSYAH", nis: "252610002"}, {nama: "ALLAN RIZKA", nis: "252610003"}, {nama: "AMAR MALIK MAULANA", nis: "252610004"}, {nama: "ANINDYA RAMADHANI", nis: "252610005"}, {nama: "ANITANIA OKTAVIA", nis: "252610006"}, {nama: "APRILIANTO DWIPUTRA", nis: "252610007"}, {nama: "Azka Dwi arrafi", nis: "252610008"}, {nama: "BARBIE LOVELY SUMANJAYA", nis: "252610009"}, {nama: "CANTIKA PUTRI JANUARDY", nis: "252610010"}, {nama: "DAFAEL FARUQ AHLAM", nis: "252610011"}, {nama: "DERY TRYATMAJAYA", nis: "252610012"}, {nama: "DWI HARYANTO", nis: "252610013"}, {nama: "ELEGI APRILIYAN", nis: "252610014"}, {nama: "FEBRIANA CHANDRA KIRANA", nis: "252610015"}, {nama: "GALIH PUTRA HERLAMBANG", nis: "252610016"}, {nama: "Ganjar Khalifatur Rijal", nis: "252610017"}, {nama: "Ghilman wafir Jamali", nis: "252610018"}, {nama: "GILANG ANGGA WIBISONO", nis: "252610019"}, {nama: "HACKER KHOIRY MUNAWAR", nis: "252610020"}, {nama: "HAIDAR NAUFAL SETIAWAN", nis: "252610021"}, {nama: "Karunia Zasa", nis: "252610022"}, {nama: "Kevin nathanael liem", nis: "252610023"}, {nama: "LEONEL IBRAHIM", nis: "252610024"}, {nama: "Marfel Nanda Pratama", nis: "252610025"}, {nama: "Mochamad aldi Ardiansyah", nis: "252610026"}, {nama: "MOHAMAD LINTANG RAZKHA PUTRA PAYITNO", nis: "252610027"}, {nama: "MOHAMAD RAFLY", nis: "252610028"}, {nama: "Mohammad Rizki Maulana", nis: "252610029"}, {nama: "Muhamad Ilham", nis: "252610030"}, {nama: "muhammad azri al-kaff", nis: "252610031"}, {nama: "MUHAMMAD BAIHAQI AL KHATIRI", nis: "252610032"}, {nama: "Muhammad Hasan Nasrullah", nis: "252610033"}, {nama: "MUHAMMAD RIJAL GUMILANG", nis: "252610034"}, {nama: "Muhammad Yaziiz Zidane", nis: "252610035"}, {nama: "Nabila Dini Maharani", nis: "252610036"}, {nama: "NELU RAYA HAMAMAYU HAYUNING BAWANA", nis: "252610037"}, {nama: "Nesya khilmatun kamilallah", nis: "252610038"}, {nama: "PIRLO SEPTINO", nis: "252610039"}, {nama: "RAMA PRADHITA PUTRA", nis: "252610040"}, {nama: "Rava alfajri", nis: "252610041"}, {nama: "Rendi Febri Yanto", nis: "252610042"}, {nama: "Salsa Safareliana", nis: "252610043"}, {nama: "SUDRAJAT", nis: "252610044"}, {nama: "SULTAN ABDULLAH MAHIR", nis: "252610045"}, {nama: "SULTAN TRI PUTRA", nis: "252610046"}, {nama: "VIRGIAWAN RIONO", nis: "252610047"}, {nama: "ZIBRAN MOH AZIQINSYAH NURKHOLIFATURDIQMAN", nis: "252610048"}
+
             ],
+            "X RPL 1": [
+  {nama: "ABDILLAH NUR SYECHAN", nis: "252610001"},
+  {nama: "ADLIAN FIRMANSYAH", nis: "252610002"},
+  {nama: "ALLAN RIZKA", nis: "252610003"},
+  {nama: "AMAR MALIK MAULANA", nis: "252610004"},
+  {nama: "ANINDYA RAMADHANI", nis: "252610005"},
+  {nama: "ANITANIA OKTAVIA", nis: "252610006"},
+  {nama: "APRILIANTO DWIPUTRA", nis: "252610007"},
+  {nama: "Azka Dwi arrafi", nis: "252610008"},
+  {nama: "BARBIE LOVELY SUMANJAYA", nis: "252610009"},
+  {nama: "CANTIKA PUTRI JANUARDY", nis: "252610010"},
+  {nama: "DAFAEL FARUQ AHLAM", nis: "252610011"},
+  {nama: "DERY TRYATMAJAYA", nis: "252610012"},
+  {nama: "DWI HARYANTO", nis: "252610013"},
+  {nama: "ELEGI APRILIYAN", nis: "252610014"},
+  {nama: "FEBRIANA CHANDRA KIRANA", nis: "252610015"},
+  {nama: "GALIH PUTRA HERLAMBANG", nis: "252610016"},
+  {nama: "Ganjar Khalifatur Rijal", nis: "252610017"},
+  {nama: "Ghilman wafir Jamali", nis: "252610018"},
+  {nama: "GILANG ANGGA WIBISONO", nis: "252610019"},
+  {nama: "HACKER KHOIRY MUNAWAR", nis: "252610020"},
+  {nama: "HAIDAR NAUFAL SETIAWAN", nis: "252610021"},
+  {nama: "Karunia Zasa", nis: "252610022"},
+  {nama: "Kevin nathanael liem", nis: "252610023"},
+  {nama: "LEONEL IBRAHIM", nis: "252610024"},
+  {nama: "Marfel Nanda Pratama", nis: "252610025"},
+  {nama: "Mochamad aldi Ardiansyah", nis: "252610026"},
+  {nama: "MOHAMAD LINTANG RAZKHA PUTRA PAYITNO", nis: "252610027"},
+  {nama: "MOHAMAD RAFLY", nis: "252610028"},
+  {nama: "Mohammad Rizki Maulana", nis: "252610029"},
+  {nama: "Muhamad Ilham", nis: "252610030"},
+  {nama: "muhammad azri al-kaff", nis: "252610031"},
+  {nama: "MUHAMMAD BAIHAQI AL KHATIRI", nis: "252610032"},
+  {nama: "Muhammad Hasan Nasrullah", nis: "252610033"},
+  {nama: "MUHAMMAD RIJAL GUMILANG", nis: "252610034"},
+  {nama: "Muhammad Yaziiz Zidane", nis: "252610035"},
+  {nama: "Nabila Dini Maharani", nis: "252610036"},
+  {nama: "NELU RAYA HAMAMAYU HAYUNING BAWANA", nis: "252610037"},
+  {nama: "Nesya khilmatun kamilallah", nis: "252610038"},
+  {nama: "PIRLO SEPTINO", nis: "252610039"},
+  {nama: "RAMA PRADHITA PUTRA", nis: "252610040"},
+  {nama: "Rava alfajri", nis: "252610041"},
+  {nama: "Rendi Febri Yanto", nis: "252610042"},
+  {nama: "Salsa Safareliana", nis: "252610043"},
+  {nama: "SUDRAJAT", nis: "252610044"},
+  {nama: "SULTAN ABDULLAH MAHIR", nis: "252610045"},
+  {nama: "SULTAN TRI PUTRA", nis: "252610046"},
+  {nama: "VIRGIAWAN RIONO", nis: "252610047"},
+  {nama: "ZIBRAN MOH AZIQINSYAH NURKHOLIFATURDIQMAN", nis: "252610048"}
+            ],
+    
         };
 
         let currentClass = '';
@@ -317,7 +310,7 @@
             currentClass = selectedClass;
 
             if (studentsData[selectedClass]) {
-                loadStudentTable(selectedClass);
+                showStudents(studentsData[selectedClass]);
                 document.getElementById('kelasTitle').textContent = "Daftar Siswa " + selectedClass;
                 document.getElementById('studentTable').classList.remove('hidden');
                 document.getElementById('controlButtons').classList.remove('hidden');
@@ -328,7 +321,29 @@
             }
         });
 
-        function setCurrentDate() {
+        function showStudents(studentList) {
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = ''; // bersihkan isi sebelumnya
+
+            studentList.forEach((student, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-4 py-2">${index + 1}</td>
+                    <td class="px-4 py-2">${student.nama}</td>
+                    <td class="px-4 py-2">${student.nis}</td>
+                    <td class="px-4 py-2 text-center"><input type="radio" name="status-${index}" value="Hadir" checked></td>
+                    <td class="px-4 py-2 text-center"><input type="radio" name="status-${index}" value="Izin"></td>
+                    <td class="px-4 py-2 text-center"><input type="radio" name="status-${index}" value="Sakit"></td>
+                    <td class="px-4 py-2 text-center"><input type="radio" name="status-${index}" value="Absen"></td>
+                    <td class="px-4 py-2"><input type="text" class="w-full border border-gray-300 rounded px-2 py-1" placeholder="Keterangan"></td>
+                    <td class="px-4 py-2 text-center">-</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+
+       function setCurrentDate() {
             const today = new Date();
             const dateString = today.toLocaleDateString('id-ID', {
             weekday: 'long',
@@ -338,6 +353,7 @@
             });
             document.getElementById('currentDate').textContent = dateString;
 
+            // Set date input to today
             const dateInput = document.getElementById('rekapTanggal');
             if (dateInput) {
             dateInput.value = today.toISOString().split('T')[0];
@@ -345,6 +361,37 @@
         }
 
         window.onload = setCurrentDate;
+
+
+        function loadKelasSelect() {
+            const kelasSelect = document.getElementById('kelasSelect');
+            kelasSelect.addEventListener('change', function() {
+                const selectedClass = this.value;
+                if (selectedClass) {
+                    currentClass = selectedClass;
+                    loadStudentTable(selectedClass);
+                    document.getElementById('controlButtons').classList.remove('hidden');
+                    document.getElementById('studentTable').classList.remove('hidden');
+                } else {
+                    document.getElementById('controlButtons').classList.add('hidden');
+                    document.getElementById('studentTable').classList.add('hidden');
+                }
+            });
+        }
+        document.getElementById("kelasSelect").addEventListener("change", function () {
+            const selectedClass = this.value;
+            if (selectedClass) {
+                currentClass = selectedClass;
+                document.getElementById("controlButtons").classList.remove("hidden");
+                document.getElementById("studentTable").classList.remove("hidden");
+                loadStudentTable(selectedClass);
+            } else {
+                currentClass = "";
+                document.getElementById("controlButtons").classList.add("hidden");
+                document.getElementById("studentTable").classList.add("hidden");
+            }
+        });
+
 
         function loadStudentTable(className) {
             const students = studentsData[className] || [];
@@ -358,9 +405,8 @@
                 const row = document.createElement('tr');
                 row.className = 'border-b hover:bg-gray-50';
                 
-                const today = document.getElementById('rekapTanggal').value || new Date().toISOString().split('T')[0];
-                const attendanceKey = `${className}_${student.nis}_${today}`;
-                const savedAttendance = attendanceData[attendanceKey] || { status: 'hadir' };
+                const attendanceKey = `${className}_${student.nis}_${new Date().toISOString().split('T')[0]}`;
+                const savedAttendance = attendanceData[attendanceKey] || {};
                 
                 row.innerHTML = `
                     <td class="px-4 py-3">${index + 1}</td>
@@ -382,7 +428,6 @@
                         <input type="text" value="${savedAttendance.keterangan || ''}" placeholder="Keterangan..." class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="keterangan_${index}">
                     </td>
                     <td class="px-4 py-3 text-center">
-                        <button onclick="deleteStudent('${className}', '${student.nis}')" class="text-red-500 hover:text-red-700">✕</button>
                     </td>
                 `;
                 tableBody.appendChild(row);
@@ -400,7 +445,7 @@
             if (!currentClass) return;
             
             const students = studentsData[currentClass] || [];
-            const today = document.getElementById('rekapTanggal').value || new Date().toISOString().split('T')[0];
+            const today = new Date().toISOString().split('T')[0];
             
             students.forEach((student, index) => {
                 const attendanceRadios = document.querySelectorAll(`input[name="attendance_${index}"]`);
@@ -440,22 +485,20 @@
             if (!currentClass) return;
             
             const students = studentsData[currentClass] || [];
-            const today = document.getElementById('rekapTanggal').value || new Date().toISOString().split('T')[0];
+            const today = new Date().toISOString().split('T')[0];
             
             const data = [['No', 'Nama Siswa', 'NIS', 'Status', 'Keterangan']];
             
             students.forEach((student, index) => {
-                const attendanceRadios = document.querySelectorAll(`input[name="attendance_${index}"]`);
-                const keteranganInput = document.getElementById(`keterangan_${index}`);
-                let status = '';
-                attendanceRadios.forEach(radio => { if (radio.checked) status = radio.value; });
+                const attendanceKey = `${currentClass}_${student.nis}_${today}`;
+                const attendance = attendanceData[attendanceKey] || {};
                 
                 data.push([
                     index + 1,
                     student.nama,
                     student.nis,
-                    status.toUpperCase(),
-                    keteranganInput.value || ''
+                    attendance.status || '',
+                    attendance.keterangan || ''
                 ]);
             });
             
@@ -497,11 +540,18 @@
                 const data = attendanceData[key];
                 let include = true;
 
+                // Filter berdasarkan kelas
                 if (kelas && data.kelas !== kelas) include = false;
-                if (bulan && !data.tanggal.startsWith(new Date().getFullYear() + `-${bulan}`)) include = false;
 
+                // Filter berdasarkan bulan
+                if (bulan && !data.tanggal.includes(`-${bulan}-`)) include = false;
+
+                // Filter berdasarkan range tanggal
                 if (tanggalAwal && tanggalAkhir) {
-                    if (data.tanggal < tanggalAwal || data.tanggal > tanggalAkhir) include = false;
+                    const tgl = new Date(data.tanggal);
+                    const tglAwal = new Date(tanggalAwal);
+                    const tglAkhir = new Date(tanggalAkhir);
+                    if (tgl < tglAwal || tgl > tglAkhir) include = false;
                 }
 
                 if (include) {
@@ -509,67 +559,255 @@
                 }
             });
 
+            // Kosongkan isi tabel
             tableBody.innerHTML = '';
 
+            // Jika tidak ada data
             if (filteredData.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">Tidak ada data yang sesuai dengan filter</td></tr>`;
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                            Tidak ada data yang sesuai dengan filter
+                        </td>
+                    </tr>
+                `;
                 return;
             }
 
-            filteredData.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
-
+            // Isi ulang tabel
             filteredData.forEach((data, index) => {
                 const row = document.createElement('tr');
                 row.className = 'border-b hover:bg-gray-50';
-                const statusColor = {'hadir': 'text-green-600 font-semibold', 'izin': 'text-yellow-600 font-semibold', 'sakit': 'text-blue-600 font-semibold', 'absen': 'text-red-600 font-semibold'};
-                row.innerHTML = `<td class="px-4 py-3">${index + 1}</td><td class="px-4 py-3 font-medium">${data.nama}</td><td class="px-4 py-3">${data.kelas}</td><td class="px-4 py-3">${data.nis}</td><td class="px-4 py-3 text-center">${new Date(data.tanggal).toLocaleDateString('id-ID')}</td><td class="px-4 py-3 text-center ${statusColor[data.status] || ''}">${data.status.toUpperCase()}</td><td class="px-4 py-3">${data.keterangan || '-'}</td>`;
+
+                const statusColor = {
+                    'hadir': 'text-green-600 font-semibold',
+                    'izin': 'text-yellow-600 font-semibold',
+                    'sakit': 'text-blue-600 font-semibold',
+                    'absen': 'text-red-600 font-semibold'
+                };
+
+                row.innerHTML = `
+                    <td class="px-4 py-3">${index + 1}</td>
+                    <td class="px-4 py-3 font-medium">${data.nama}</td>
+                    <td class="px-4 py-3">${data.kelas}</td>
+                    <td class="px-4 py-3">${data.nis}</td>
+                    <td class="px-4 py-3 text-center">${new Date(data.tanggal).toLocaleDateString('id-ID')}</td>
+                    <td class="px-4 py-3 text-center ${statusColor[data.status] || ''}">${data.status.toUpperCase()}</td>
+                    <td class="px-4 py-3">${data.keterangan || '-'}</td>
+                `;
                 tableBody.appendChild(row);
             });
         }
 
-        function printRekap() { window.print(); }
+
+        function printRekap() {
+            window.print();
+        }
 
         function exportRekapToExcel() {
-            // ... (Fungsi ini sama seperti sebelumnya, tidak perlu diubah) ...
+            const kelas = document.getElementById('rekapKelas').value;
+            const tanggalAwal = document.getElementById('rekapTanggalAwal').value;
+            const tanggalAkhir = document.getElementById('rekapTanggalAkhir').value;
+            const bulan = document.getElementById('rekapBulan').value;
+
+            let filteredData = [];
+
+            Object.keys(attendanceData).forEach(key => {
+                const data = attendanceData[key];
+                let include = true;
+
+                // Filter berdasarkan kelas
+                if (kelas && data.kelas !== kelas) include = false;
+
+                // Filter berdasarkan bulan
+                if (bulan && !data.tanggal.includes(`-${bulan}-`)) include = false;
+
+                // Filter berdasarkan rentang tanggal
+                if (tanggalAwal && tanggalAkhir) {
+                    const tgl = new Date(data.tanggal);
+                    const tglAwal = new Date(tanggalAwal);
+                    const tglAkhir = new Date(tanggalAkhir);
+                    if (tgl < tglAwal || tgl > tglAkhir) include = false;
+                }
+
+                if (include) {
+                    filteredData.push(data);
+                }
+            });
+
+            // Siapkan data untuk Excel
+            const data = [['No', 'Nama Siswa', 'Kelas', 'NIS', 'Tanggal', 'Status', 'Keterangan']];
+
+            filteredData.forEach((item, index) => {
+                data.push([
+                    index + 1,
+                    item.nama,
+                    item.kelas,
+                    item.nis,
+                    new Date(item.tanggal).toLocaleDateString('id-ID'),
+                    item.status.toUpperCase(),
+                    item.keterangan || '-'
+                ]);
+            });
+
+            // Buat dan ekspor file Excel
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Rekap Kehadiran');
+
+            // Nama file dinamis
+            const tglLabel = (tanggalAwal && tanggalAkhir)
+                ? `${tanggalAwal}_sd_${tanggalAkhir}`
+                : new Date().toISOString().split('T')[0];
+
+            const filename = `Rekap_Kehadiran_${kelas || 'Semua_Kelas'}_${tglLabel}.xlsx`;
+            XLSX.writeFile(wb, filename);
         }
 
-        function showAddStudentModal() { document.getElementById('addStudentModal').classList.remove('hidden'); }
-        function closeAddStudentModal() { document.getElementById('addStudentModal').classList.add('hidden'); }
+
+        function showAddStudentModal() {
+            document.getElementById('addStudentModal').classList.remove('hidden');
+        }
+
+        function closeAddStudentModal() {
+            document.getElementById('addStudentModal').classList.add('hidden');
+            document.getElementById('newStudentName').value = '';
+            document.getElementById('newStudentNIS').value = '';
+            document.getElementById('newStudentClass').value = '';
+        }
 
         function addNewStudent() {
-            const nama = document.getElementById('newStudentName').value.trim();
-            const nis = document.getElementById('newStudentNIS').value.trim();
-            const kelas = document.getElementById('newStudentClass').value;
-            if (!nama || !nis || !kelas) { alert('Mohon lengkapi semua data siswa!'); return; }
-            if (!studentsData[kelas]) { studentsData[kelas] = []; }
-            const existingStudent = studentsData[kelas].find(student => student.nis === nis);
-            if (existingStudent) { alert('NIS sudah ada di kelas ini!'); return; }
-            studentsData[kelas].push({ nama, nis });
-            if (currentClass === kelas) { loadStudentTable(kelas); }
-            closeAddStudentModal();
-            alert('Siswa berhasil ditambahkan!');
-        }
+    const nama = document.getElementById('newStudentName').value.trim();
+    const nis = document.getElementById('newStudentNIS').value.trim();
+    const kelas = document.getElementById('newStudentClass').value;
+
+    if (!nama || !nis || !kelas) {
+        alert('Mohon lengkapi semua data siswa!');
+        return;
+    }
+
+    // Jika kelas belum ada di data, buat array baru
+    if (!studentsData[kelas]) {
+        studentsData[kelas] = [];
+    }
+
+    // Cek NIS sudah ada di kelas itu atau belum
+    const existingStudent = studentsData[kelas].find(student => student.nis === nis);
+    if (existingStudent) {
+        alert('NIS sudah ada di kelas ini!');
+        return;
+    }
+
+    // Tambah siswa baru
+    studentsData[kelas].push({ nama, nis });
+
+    // Jika sedang lihat kelas ini, refresh tabelnya
+    if (currentClass === kelas) {
+        loadStudentTable(kelas);
+    }
+
+    // Tutup modal dan reset input
+    closeAddStudentModal();
+
+    alert('Siswa berhasil ditambahkan!');
+}
+
+function closeAddStudentModal() {
+    document.getElementById('addStudentModal').classList.add('hidden');
+    document.getElementById('newStudentName').value = '';
+    document.getElementById('newStudentNIS').value = '';
+    document.getElementById('newStudentClass').value = '';
+}
+
 
         function deleteStudent(className, nis) {
-            if (confirm(`Yakin ingin menghapus siswa dengan NIS ${nis}?`)) {
+            if (confirm('Yakin ingin menghapus siswa ini?')) {
                 studentsData[className] = studentsData[className].filter(student => student.nis !== nis);
+                
+                // Remove attendance data for this student
                 Object.keys(attendanceData).forEach(key => {
-                    if (key.includes(`_${nis}_`)) { delete attendanceData[key]; }
+                    if (key.includes(`${className}_${nis}_`)) {
+                        delete attendanceData[key];
+                    }
                 });
+                
                 localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
-                if (currentClass === className) { loadStudentTable(className); }
+                
+                if (currentClass === className) {
+                    loadStudentTable(className);
+                }
+                
                 alert('Siswa berhasil dihapus!');
             }
         }
 
-        function showImportModal() { document.getElementById('importModal').classList.remove('hidden'); }
-        function closeImportModal() { document.getElementById('importModal').classList.add('hidden'); }
-
-        function importFromExcel() {
-            // ... (Fungsi ini sama seperti sebelumnya, tidak perlu diubah) ...
+        function showImportModal() {
+            document.getElementById('importModal').classList.remove('hidden');
         }
 
-    </script>
-</body>
-</html>
+        function closeImportModal() {
+            document.getElementById('importModal').classList.add('hidden');
+            document.getElementById('excelFile').value = '';
+        }
 
+        function importFromExcel() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Pilih file Excel terlebih dahulu!');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                    
+                    // Skip header row
+                    const rows = jsonData.slice(1);
+                    let importCount = 0;
+                    
+                    rows.forEach(row => {
+                        if (row.length >= 3) {
+                            const nama = row[0]?.toString().trim();
+                            const nis = row[1]?.toString().trim();
+                            const kelas = row[2]?.toString().trim();
+                            
+                            if (nama && nis && kelas) {
+                                if (!studentsData[kelas]) {
+                                    studentsData[kelas] = [];
+                                }
+                                
+                                // Check if NIS already exists
+                                const existingStudent = studentsData[kelas].find(student => student.nis === nis);
+                                if (!existingStudent) {
+                                    studentsData[kelas].push({nama, nis});
+                                    importCount++;
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Refresh table if needed
+                    if (currentClass && studentsData[currentClass]) {
+                        loadStudentTable(currentClass);
+                    }
+                    
+                    closeImportModal();
+                    alert(`Berhasil mengimpor ${importCount} siswa!`);
+                    
+                } catch (error) {
+                    alert('Error membaca file Excel. Pastikan format file sesuai petunjuk!');
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96b5546f5238c0de',t:'MTc1NDU1NDU2NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
