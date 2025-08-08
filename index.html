@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absen Digital - SMKS Wahidin Kota Cirebon</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Poppins', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-shadow { box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .btn-primary { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); }
+        .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .btn-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .saved-indicator { animation: fadeInOut 3s ease-in-out; }
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; transform: translateY(-10px); }
+            50% { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <div class="gradient-bg text-white py-6 mb-8">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold mb-2">ABSEN DIGITAL</h1>
+                <h2 class="text-2xl font-semibold mb-1">SMKS WAHIDIN KOTA CIREBON</h2>
+                <p class="text-lg opacity-90">Sistem Absensi Siswa Terintegrasi</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="container mx-auto px-4 mb-6">
+        <div class="flex justify-center space-x-4">
+            <button onclick="showPage('absen')" id="btnAbsen" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                Halaman Absen
+            </button>
+            <button onclick="showPage('rekap')" id="btnRekap" class="bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                Rekapan Kehadiran
+            </button>
+        </div>
+    </div>
+
+    <!-- Saved Indicator -->
+    <div id="savedIndicator" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg font-semibold saved-indicator hidden z-50">
+        Absen berhasil disimpan!
+    </div>
+
+    <!-- Page 1: Absen -->
+    <div id="pageAbsen" class="container mx-auto px-4">
+        <!-- Teacher Info Card -->
+        <div class="bg-white rounded-xl card-shadow p-6 mb-6">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Informasi Guru</h3>
+                    <div class="space-y-2">
+                        <p><span class="font-semibold">Nama:</span> Aan Faturohman, S.Sn</p>
+                        <p><span class="font-semibold">Mata Pelajaran:</span> INFORMATIKA</p>
+                        <p><span class="font-semibold">Tanggal:</span> <span id="currentDate"></span></p>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Kelas Tersedia</h3>
+                    <select id="kelasSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Pilih Kelas</option>
+                        <option value="X AKL 1">X AKL 1</option>
+                        <option value="X AKL 2">X AKL 2</option>
+                        <option value="X MPLB 1">X MPLB 1</option>
+                        <option value="X MPLB 2">X MPLB 2</option>
+                        <option value="X BR 1">X BR 1</option>
+                        <option value="X BR 2">X BR 2</option>
+                        <option value="X BR 3">X BR 3</option>
+                        <option value="X TKJ 2">X TKJ 2</option>
+                        <option value="X TKJ 3">X TKJ 3</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Buttons -->
+        <div id="controlButtons" class="bg-white rounded-xl card-shadow p-6 mb-6 hidden">
+            <div class="flex flex-wrap gap-4 justify-center">
+                <button onclick="hadirSemua()" class="btn-success text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                    Hadir Semua
+                </button>
+                <button onclick="saveAbsen()" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                    Simpan Absen
+                </button>
+                <button onclick="exportToExcel()" class="btn-warning text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                    Ekspor ke Excel
+                </button>
+                <button onclick="showAddStudentModal()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                    Tambah Siswa
+                </button>
+                <button onclick="showImportModal()" class="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                    Import Excel
+                </button>
+            </div>
+        </div>
+
+        <!-- Student Table -->
+        <div id="studentTable" class="bg-white rounded-xl card-shadow p-6 hidden">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center" id="kelasTitle">Daftar Siswa</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="px-4 py-3 text-left font-semibold">No</th>
+                            <th class="px-4 py-3 text-left font-semibold">Nama Siswa</th>
+                            <th class="px-4 py-3 text-left font-semibold">NIS</th>
+                            <th class="px-4 py-3 text-center font-semibold">Hadir</th>
+                            <th class="px-4 py-3 text-center font-semibold">Izin</th>
+                            <th class="px-4 py-3 text-center font-semibold">Sakit</th>
+                            <th class="px-4 py-3 text-center font-semibold">Absen</th>
+                            <th class="px-4 py-3 text-left font-semibold">Keterangan</th>
+                            <th class="px-4 py-3 text-center font-semibold">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 2: Rekap -->
+    <div id="pageRekap" class="container mx-auto px-4 hidden">
+        <div class="bg-white rounded-xl card-shadow p-6">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Rekapan Kehadiran Siswa</h3>
+            
+            <!-- Filter Controls -->
+            <div class="grid md:grid-cols-3 gap-4 mb-6">
+                <select id="rekapKelas" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">Semua Kelas</option>
+                    <option value="X AKL 1">X AKL 1</option>
+                    <option value="X AKL 2">X AKL 2</option>
+                    <option value="X MPLB 1">X MPLB 1</option>
+                    <option value="X MPLB 2">X MPLB 2</option>
+                    <option value="X BR 1">X BR 1</option>
+                    <option value="X BR 2">X BR 2</option>
+                    <option value="X BR 3">X BR 3</option>
+                    <option value="X TKJ 2">X TKJ 2</option>
+                    <option value="X TKJ 3">X TKJ 3</option>
+                </select>
+                <input type="date" id="rekapTanggal" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <select id="rekapBulan" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">Pilih Bulan</option>
+                    <option value="01">Januari</option>
+                    <option value="02">Februari</option>
+                    <option value="03">Maret</option>
+                    <option value="04">April</option>
+                    <option value="05">Mei</option>
+                    <option value="06">Juni</option>
+                    <option value="07">Juli</option>
+                    <option value="08">Agustus</option>
+                    <option value="09">September</option>
+                    <option value="10">Oktober</option>
+                    <option value="11">November</option>
+                    <option value="12">Desember</option>
+                </select>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-4 justify-center mb-6">
+                <button onclick="filterRekap()" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                    Filter Data
+                </button>
+                <button onclick="printRekap()" class="btn-success text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                    Cetak Rekap
+                </button>
+                <button onclick="exportRekapToExcel()" class="btn-warning text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105">
+                    Ekspor Rekap
+                </button>
+            </div>
+
+            <!-- Rekap Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="px-4 py-3 text-left font-semibold">No</th>
+                            <th class="px-4 py-3 text-left font-semibold">Nama Siswa</th>
+                            <th class="px-4 py-3 text-left font-semibold">Kelas</th>
+                            <th class="px-4 py-3 text-left font-semibold">NIS</th>
+                            <th class="px-4 py-3 text-center font-semibold">Tanggal</th>
+                            <th class="px-4 py-3 text-center font-semibold">Status</th>
+                            <th class="px-4 py-3 text-left font-semibold">Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rekapTableBody">
+                        <tr>
+                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                Pilih filter dan klik "Filter Data" untuk melihat rekapan kehadiran
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div id="addStudentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <h3 class="text-xl font-bold mb-4">âž• Tambah Siswa Baru</h3>
+            <div class="space-y-4">
+                <input type="text" id="newStudentName" placeholder="Nama Siswa" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="newStudentNIS" placeholder="NIS" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <select id="newStudentClass" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">Pilih Kelas</option>
+                    <option value="X AKL 1">X AKL 1</option>
+                    <option value="X AKL 2">X AKL 2</option>
+                    <option value="X MPLB 1">X MPLB 1</option>
+                    <option value="X MPLB 2">X MPLB 2</option>
+                    <option value="X BR 1">X BR 1</option>
+                    <option value="X BR 2">X BR 2</option>
+                    <option value="X BR 3">X BR 3</option>
+                    <option value="X TKJ 2">X TKJ 2</option>
+                    <option value="X TKJ 3">X TKJ 3</option>
+                </select>
+            </div>
+            <div class="flex gap-4 mt-6">
+                <button onclick="addNewStudent()" class="btn-success text-white px-4 py-2 rounded-lg font-semibold flex-1">
+                    Tambah
+                </button>
+                <button onclick="closeAddStudentModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg font-semibold flex-1">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="importModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-lg mx-4">
+            <h3 class="text-xl font-bold mb-4">ðŸ“¥ Import Data Siswa dari Excel</h3>
+            <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                <h4 class="font-semibold mb-2">ðŸ“‹ Petunjuk Import:</h4>
+                <ul class="text-sm space-y-1">
+                    <li>File harus berformat .xlsx atau .xls</li>
+                    <li>Kolom A: Nama Siswa</li>
+                    <li>Kolom B: NIS</li>
+                    <li>Kolom C: Kelas</li>
+                    <li>Baris pertama adalah header</li>
+                </ul>
+            </div>
+            <input type="file" id="excelFile" accept=".xlsx,.xls" class="w-full p-3 border border-gray-300 rounded-lg mb-4">
+            <div class="flex gap-4">
+                <button onclick="importFromExcel()" class="btn-success text-white px-4 py-2 rounded-lg font-semibold flex-1">
+                    Import
+                </button>
+                <button onclick="closeImportModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg font-semibold flex-1">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data siswa
+        const studentsData = {
+            "X AKL 1": [
+  {nama: "AGUM PAJAINUR RAMDANI", nis: "252610431"},
+  {nama: "Ajeng Rahmawati", nis: "252610432"},
+  {nama: "Akhmad Labib Pratama", nis: "252610433"},
+  {nama: "ALFARIZI THALIB", nis: "252610434"},
+  {nama: "Alfiah Setiawati", nis: "252610435"},
+  {nama: "ALYA ZAHRA", nis: "252610436"},
+  {nama: "AUREVA D CLARISA", nis: "252610437"},
+  {nama: "Ayu Nurfitriyani", nis: "252610438"},
+  {nama: "BILQIS ERINA HILWANA", nis: "252610439"},
+  {nama: "CAHYA DINA CYNTHIYA", nis: "252610440"},
+  {nama: "CALLYSTA CHERRY AQILAH", nis: "252610441"},
+  {nama: "CHAILA AYERIN", nis: "252610442"},
+  {nama: "DESTIANA UTAMI", nis: "252610443"},
+  {nama: "DIVA TRI APRILLIA DUMA SUGANDA", nis: "252610444"},
+  {nama: "FADILLAH RAMADHANI", nis: "252610445"},
+  {nama: "Fikri gifari", nis: "252610446"},
+  {nama: "Given queenqa amor", nis: "252610447"},
+  {nama: "ITA ANDRI YANI", nis: "252610448"},
+  {nama: "JULIANT KIMBILLCENT MOONIK", nis: "252610449"},
+  {nama: "Khaira Masrur Wahyudi", nis: "252610450"},
+  {nama: "LIA SAFITRI", nis: "252610451"},
+  {nama: "Lintang Tiana", nis: "252610452"},
+  {nama: "Maulinda nur Safira", nis: "252610453"},
+  {nama: "MEILANI PUTRI", nis: "252610454"},
+  {nama: "MOHAMMAD AKBAR MAULANA", nis: "252610455"},
+  {nama: "MOHAMMAD IQBAL MAULANA", nis: "252610456"},
+  {nama: "Muhammad Al Vino", nis: "252610457"},
+  {nama: "NADIA NURFADILLAH", nis: "252610458"},
+  {nama: "NADILA PUTRI", nis: "252610459"},
+  {nama: "nova ritanti", nis: "252610460"},
+  {nama: "Nurul yasin Aisyah", nis: "252610461"},
+  {nama: "PINA PUYAYAH", nis: "252610462"},
+  {nama: "PIPIT AISAH", nis: "252610463"},
+  {nama: "PUTRI GUNAWAN", nis: "252610464"},
+  {nama: "QUINSHA FELICIA", nis: "252610465"},
+  {nama: "Rahmawati", nis: "252610466"},
+  {nama: "ROJA KURNIAWAN", nis: "252610467"},
+  {nama: "SAFIRA NISA", nis: "252610468"},
+  {nama: "SEPTINAH TRI RAHMADHANI", nis: "252610469"},
+  {nama: "SHEREEN LOVINA SIAGIAN", nis: "252610470"},
+  {nama: "Shinta wijaya", nis: "252610471"},
+  {nama: "Siti nur Kholifah", nis: "252610472"},
+  {nama: "Siti nurana", nis: "252610473"},
+  {nama: "Sriyuwanengsih", nis: "252610474"},
+  {nama: "Syafa Amelia Putri Az Zahra", nis: "252610475"},
+  {nama: "SYILA ALMIRA NUR'AINI", nis: "252610476"},
+  {nama: "WAFA HANIM AZZAHRA", nis: "252610477"},
+  {nama: "ZASKIA", nis: "252610478"}
+            ],
+            "X AKL 2": [
+  {nama: "AGUNG WINANTA", nis: "252610479"},
+  {nama: "ALIMAH", nis: "252610480"},
+  {nama: "AMIRAH MANAR SAPUTRI", nis: "252610481"},
+  {nama: "Angelika Budi Yani", nis: "252610482"},
+  {nama: "BUNGA KARTIKA SARI", nis: "252610483"},
+  {nama: "CELSEA NUALA CHIKA", nis: "252610484"},
+  {nama: "Celsi ARIYANTI", nis: "252610485"},
+  {nama: "CICI NURISKA", nis: "252610486"},
+  {nama: "Dea Anindia Utami", nis: "252610487"},
+  {nama: "Dede Winda", nis: "252610488"},
+  {nama: "DILLAH FARAHUSNA SEPTIA", nis: "252610489"},
+  {nama: "EKA SILVI RAHMADHANI", nis: "252610490"},
+  {nama: "FAISHAL NUR RAMADHAN", nis: "252610491"},
+  {nama: "FANNYSA OCTAVIANI", nis: "252610492"},
+  {nama: "HANDI PRATAMA", nis: "252610493"},
+  {nama: "Hanifah Aida Dwi Wibowo", nis: "252610494"},
+  {nama: "Jesi Safira", nis: "252610495"},
+  {nama: "JUERNI MAHARANI", nis: "252610496"},
+  {nama: "KASIRLI", nis: "252610497"},
+  {nama: "KESYA APRILIA SHAFIRA", nis: "252610498"},
+  {nama: "KEYRICA AGUSTINA", nis: "252610499"},
+  {nama: "MAULANA ARVAN MURDANI", nis: "252610500"},
+  {nama: "Maulidiya Febiola", nis: "252610501"},
+  {nama: "MEI SELVI", nis: "252610502"},
+  {nama: "Metta Julianti", nis: "252610503"},
+  {nama: "MOHAMAD AFGAN WALUYA", nis: "252610504"},
+  {nama: "MUHAMMAD FATTAH NOERSHABIT", nis: "252610505"},
+  {nama: "MUSLIMAH INDRIYANI", nis: "252610506"},
+  {nama: "MUTIARA BASKARA", nis: "252610507"},
+  {nama: "NABILA", nis: "252610508"},
+  {nama: "Nadine alfrida ardhianti", nis: "252610509"},
+  {nama: "Nasila putri oktafiani", nis: "252610510"},
+  {nama: "NATASYA PRAMAHAYOGA", nis: "252610511"},
+  {nama: "NIA RAMADANI", nis: "252610512"},
+  {nama: "NIZAM PARVEEN", nis: "252610513"},
+  {nama: "NUR ZAKY RIZQULLAH", nis: "252610514"},
+  {nama: "Okta Riyanto", nis: "252610515"},
+  {nama: "RESTU RAMADHAN", nis: "252610516"},
+  {nama: "RISKY MAULANA", nis: "252610517"},
+  {nama: "Rohyani", nis: "252610518"},
+  {nama: "SARA FEBRIYANI", nis: "252610519"},
+  {nama: "Sintia indah", nis: "252610520"},
+  {nama: "SITI TUMAENAH", nis: "252610521"},
+  {nama: "WANGI IRON PAMUNGKAS", nis: "252610522"}
+            ],
+            "X MPLB 1": [
+  {nama: "adinda mayang sari", nis: "252610335"},
+  {nama: "AISYAH DWI CANDRA", nis: "252610336"},
+  {nama: "Alicia nurfadillah", nis: "252610337"},
+  {nama: "Amelia", nis: "252610338"},
+  {nama: "ASTRIANI PUTRI", nis: "252610339"},
+  {nama: "AUBELVA DAMERIA PIETRI ALDIVIANA", nis: "252610340"},
+  {nama: "AYU KHARISMA PUTRI", nis: "252610341"},
+  {nama: "AZAHRA PUTRI YUHANA", nis: "252610342"},
+  {nama: "Cahya Adelia", nis: "252610343"},
+  {nama: "DEVIKA", nis: "252610344"},
+  {nama: "Dhifa", nis: "252610345"},
+  {nama: "Dian Pratiwi", nis: "252610346"},
+  {nama: "Diana Ulfah", nis: "252610347"},
+  {nama: "DINDA FITRI AURELLIA", nis: "252610348"},
+  {nama: "DWI YANTI KAMILA SANTOSO", nis: "252610349"},
+  {nama: "FARADITA SAVITRI", nis: "252610350"},
+  {nama: "Fatimah Habib Al Musthofa", nis: "252610351"},
+  {nama: "Fitriyah", nis: "252610352"},
+  {nama: "HOLILAH", nis: "252610353"},
+  {nama: "IGHFIRLY AULIA PUTRI", nis: "252610354"},
+  {nama: "JAH AULIA PUJI RAMADANI", nis: "252610355"},
+  {nama: "Khusnul khotimah", nis: "252610356"},
+  {nama: "LAILA RAMDANI", nis: "252610357"},
+  {nama: "LIVIA REGINA PUTRI", nis: "252610358"},
+  {nama: "LUSIANA", nis: "252610359"},
+  {nama: "Maulidia Anggita", nis: "252610360"},
+  {nama: "MAULIDIYA FEBIOLA", nis: "252610361"},
+  {nama: "MEKAR SARI DEVI", nis: "252610362"},
+  {nama: "Melinda", nis: "252610363"},
+  {nama: "Miftahul Fauziah", nis: "252610364"},
+  {nama: "Nadya Ayesya Larasati", nis: "252610365"},
+  {nama: "Najeeh Rahmanah", nis: "252610366"},
+  {nama: "NAZWA AULIA HADIYANI", nis: "252610367"},
+  {nama: "NUR ANITA SARI", nis: "252610368"},
+  {nama: "NUR FATIMAH", nis: "252610369"},
+  {nama: "NURAENI", nis: "252610370"},
+  {nama: "NURLIA", nis: "252610371"},
+  {nama: "Putri Indriyani", nis: "252610372"},
+  {nama: "REGINA", nis: "252610373"},
+  {nama: "SAFA RIANTI PRATIWI", nis: "252610374"},
+  {nama: "Safira Febrianti", nis: "252610375"},
+  {nama: "Sarisha Putri", nis: "252610376"},
+  {nama: "Sefira Dwi Kusuma", nis: "252610377"},
+  {nama: "Sherli Yulia Putri", nis: "252610378"},
+  {nama: "SHINTA OKTAVIANI", nis: "252610379"},
+  {nama: "SYAFIRA YULIANTI", nis: "252610380"},
+  {nama: "SYEMMALIA PUTRI", nis: "252610381"},
+  {nama: "Syifa Nur Aulia", nis: "252610382"}
+            ],
+            "X MPLB 2": [
+  {nama: "ALIKHA CAHYA ZEANNIFA", nis: "252610383"},
+  {nama: "ALINDA DWI AMELIA", nis: "252610384"},
+  {nama: "AMELIA NUR RAMADHANI", nis: "252610385"},
+  {nama: "ANISA DIVA FAYYAZA", nis: "252610386"},
+  {nama: "Anita Eka Saputri", nis: "252610387"},
+  {nama: "ANNISA NUR JANNAH", nis: "252610388"},
+  {nama: "ANTINI", nis: "252610389"},
+  {nama: "Apriliani", nis: "252610390"},
+  {nama: "Ayu Indriyani", nis: "252610391"},
+  {nama: "AYU MAULIDIYA ROHMAH", nis: "252610392"},
+  {nama: "BUNGA MARTHA AYU SAPUTRI", nis: "252610393"},
+  {nama: "CHELSY REY NADA PUTRI", nis: "252610394"},
+  {nama: "DEVI ULI RAHMADANI", nis: "252610395"},
+  {nama: "Diana Putri", nis: "252610396"},
+  {nama: "DILLA SYAHIRA", nis: "252610397"},
+  {nama: "ELSA", nis: "252610398"},
+  {nama: "EVA LUTFIYANI", nis: "252610399"},
+  {nama: "EVI ERLINDA", nis: "252610400"},
+  {nama: "FADILLAH FATMAWATI", nis: "252610401"},
+  {nama: "Fitri Rahmadiayayani", nis: "252610402"},
+  {nama: "FRISKA FEBIANA MUFIDAH", nis: "252610403"},
+  {nama: "imelda riffani agustin", nis: "252610404"},
+  {nama: "INDRI AULIYA", nis: "252610405"},
+  {nama: "Intan jelina", nis: "252610406"},
+  {nama: "JAMIATUS SHOLIHAH", nis: "252610407"},
+  {nama: "LINGGA DEWI", nis: "252610408"},
+  {nama: "MALA SHINTA DWIANTI", nis: "252610409"},
+  {nama: "Maulia cantika dewi", nis: "252610410"},
+  {nama: "MAULIDYA KIRANA PUTRI", nis: "252610411"},
+  {nama: "MITA NATANAYLA SYAHLA", nis: "252610412"},
+  {nama: "NADIA LARASATI", nis: "252610413"},
+  {nama: "Nadya Putri", nis: "252610414"},
+  {nama: "NAILAH ALWAFA", nis: "252610415"},
+  {nama: "NUR ASRI", nis: "252610416"},
+  {nama: "Nurul Asyifa", nis: "252610417"},
+  {nama: "PITRI RAHAYU", nis: "252610418"},
+  {nama: "PUTRI ARISANDI", nis: "252610419"},
+  {nama: "putri ayu", nis: "252610420"},
+  {nama: "RIZKIYAH AVRILIYANTI", nis: "252610421"},
+  {nama: "Safa Aprillia", nis: "252610422"},
+  {nama: "Sapitri", nis: "252610423"},
+  {nama: "Shike Aulia", nis: "252610424"},
+  {nama: "SIFA FAUZIAH", nis: "252610425"},
+  {nama: "Sri Solekha", nis: "252610426"},
+  {nama: "Syahira Rahma Vicka", nis: "252610427"},
+  {nama: "veryska isna putri", nis: "252610428"},
+  {nama: "Warsini", nis: "252610429"},
+  {nama: "Yulia mutiara hadi", nis: "252610430"}
+            ],
+            "X BR 1": [
+  {nama: "ABEL SRI PRIHATINI", nis: "252610193"},
+  {nama: "ADITTIA JULIANSYAH", nis: "252610194"},
+  {nama: "AGUNG PRATAMA", nis: "252610195"},
+  {nama: "AGUNG GUSTIYONO", nis: "252610196"},
+  {nama: "AKBAR RIVALDI", nis: "252610197"},
+  {nama: "ALISYA MEGLANI", nis: "252610198"},
+  {nama: "ANGGI DWI MEYLANI", nis: "252610199"},
+  {nama: "BUNGA NAZWA KHAERUNISAH", nis: "252610200"},
+  {nama: "CANTIKA PUTRI", nis: "252610201"},
+  {nama: "DEVARA ALFIANI", nis: "252610202"},
+  {nama: "DIANA PUTRI AULIA", nis: "252610203"},
+  {nama: "ERLANGGA RADITYA", nis: "252610204"},
+  {nama: "FAIROZA", nis: "252610205"},
+  {nama: "FAIRUZ IZDIHAR", nis: "252610206"},
+  {nama: "FAIZAL ZUNIARIDWAN", nis: "252610207"},
+  {nama: "FALIHA NAILAHATUS SYAROFAH", nis: "252610208"},
+  {nama: "FANI ALMAIDAH", nis: "252610209"},
+  {nama: "FATKALIPNAH", nis: "252610210"},
+  {nama: "GANIZA AULIANI", nis: "252610211"},
+  {nama: "ILHAM RAMADHANI", nis: "252610212"},
+  {nama: "INESTA PUTRI", nis: "252610213"},
+  {nama: "INTAN NURAENI", nis: "252610214"},
+  {nama: "JESSICA KAMILA", nis: "252610215"},
+  {nama: "JIHAN LAELATUL AIDAH", nis: "252610216"},
+  {nama: "JIHAN SAFITRI", nis: "252610217"},
+  {nama: "KAYLA LUTHFIANA", nis: "252610218"},
+  {nama: "M KHAERUN", nis: "252610219"},
+  {nama: "M IRFAN MAULANA", nis: "252610220"},
+  {nama: "MELINDA TUNGGA DEWI", nis: "252610221"},
+  {nama: "M KHAERUL SAPUTRA", nis: "252610222"},
+  {nama: "M SANDI PRATAMA", nis: "252610223"},
+  {nama: "NAYLATUL AROFAH", nis: "252610224"},
+  {nama: "NAZWA LISE AL SYIFA", nis: "252610225"},
+  {nama: "NIKI FARISKA", nis: "252610226"},
+  {nama: "PUTRI ADELIA SAFIRA", nis: "252610227"},
+  {nama: "RAFKA IZHA RAHADIAN", nis: "252610228"},
+  {nama: "REGINA AURA CANTIKA", nis: "252610229"},
+  {nama: "REIHAN ZACKY", nis: "252610230"},
+  {nama: "REVITA RACHTAMA", nis: "252610231"},
+  {nama: "REZKY CHANDRA ILHAM", nis: "252610232"},
+  {nama: "RIANTI NURJAYA", nis: "252610233"},
+  {nama: "SALMA AQILLAH", nis: "252610234"},
+  {nama: "SASHA CHARRISA", nis: "252610235"},
+  {nama: "SIFA KHOIRUNISA ANDYANI", nis: "252610236"},
+  {nama: "SOFI KAROMAH", nis: "252610237"},
+  {nama: "SYERIN NASANI", nis: "252610238"},
+  {nama: "TIARA", nis: "252610239"},
+  {nama: "VITALIAN", nis: "252610240"}
+            ],
+            "X BR 2": [
+  {nama: "ALMAYRA SABRINA", nis: "252610241"},
+  {nama: "ALTHAFUNISA UTAMI PRAWIRA", nis: "252610242"},
+  {nama: "AYESHA PUTRI MAYSHA", nis: "252610243"},
+  {nama: "AYU PUTRI PRIYATNA", nis: "252610244"},
+  {nama: "Cantika Putri", nis: "252610245"},
+  {nama: "DEA NOVRILIA", nis: "252610246"},
+  {nama: "DIANA PUTRI AULIA", nis: "252610247"},
+  {nama: "DINA TSURAYYA", nis: "252610248"},
+  {nama: "FADHILAH", nis: "252610249"},
+  {nama: "FADIKA PUTRA PRATAMA", nis: "252610250"},
+  {nama: "FAIZAL ZUNIARIDWAN", nis: "252610251"},
+  {nama: "faliha nailatussyarofah", nis: "252610252"},
+  {nama: "FANI ALMAIDAH", nis: "252610253"},
+  {nama: "FATIA NASHA YURISTIA", nis: "252610254"},
+  {nama: "FIRDA AYU RAMADHANI", nis: "252610255"},
+  {nama: "ILHAM RAMADANI", nis: "252610256"},
+  {nama: "Indri lestari", nis: "252610257"},
+  {nama: "Intan Nur'aeni", nis: "252610258"},
+  {nama: "Jihan laelatul aidah", nis: "252610259"},
+  {nama: "Kayla luthfiana azzahra", nis: "252610260"},
+  {nama: "MAULANA SAPUTRA", nis: "252610261"},
+  {nama: "Melinda tungga dewi", nis: "252610262"},
+  {nama: "MOCH PUTRA ALFAREZKY", nis: "252610263"},
+  {nama: "Mohamad Fadil Arief", nis: "252610264"},
+  {nama: "MUHAMAD SETIAWAN", nis: "252610265"},
+  {nama: "Muhammad Khaerul Saputra", nis: "252610266"},
+  {nama: "NADINE ALFRIDA ARDHIANTI", nis: "252610267"},
+  {nama: "NATA NUR ROHIM", nis: "252610268"},
+  {nama: "PUTRI ADELIA SAFIRAH", nis: "252610269"},
+  {nama: "Refi dianasari", nis: "252610270"},
+  {nama: "REIHAN ZACKY", nis: "252610271"},
+  {nama: "RESA", nis: "252610272"},
+  {nama: "Revi marischa Sukamto", nis: "252610273"},
+  {nama: "RIANA", nis: "252610274"},
+  {nama: "ROMAN IBRAHIM", nis: "252610275"},
+  {nama: "SAFANA IFA JUNITA", nis: "252610276"},
+  {nama: "Saliva", nis: "252610277"},
+  {nama: "Sendy Afriyansa", nis: "252610278"},
+  {nama: "Shela Dwi nurul aeni", nis: "252610279"},
+  {nama: "Sifa Khoirunnisa andyani", nis: "252610280"},
+  {nama: "SILVIA SEPTIANI", nis: "252610281"},
+  {nama: "Siti Khuzaimah", nis: "252610282"},
+  {nama: "Suci Ekawati", nis: "252610283"},
+  {nama: "Syarifatun najah", nis: "252610284"},
+  {nama: "Syerin nasani", nis: "252610285"},
+  {nama: "TIARA", nis: "252610286"},
+  {nama: "VINNA VERISKHA", nis: "252610287"},
+  {nama: "Yasmin Ramadini", nis: "252610288"}
+            ],
+            "X BR 3": [
+  {nama: "AFRILIA", nis: "252610289"},
+  {nama: "AISHA", nis: "252610290"},
+  {nama: "ALDI KURNIAWAN", nis: "252610291"},
+  {nama: "DIANA LESTARI", nis: "252610292"},
+  {nama: "DINDA AYU PRATIWI", nis: "252610293"},
+  {nama: "DITA AMELIA", nis: "252610294"},
+  {nama: "DUYENAH", nis: "252610295"},
+  {nama: "DWI ANDINI", nis: "252610296"},
+  {nama: "FADILA PUTRI CLAUDIA HASIBUAN", nis: "252610297"},
+  {nama: "GHATAN PUTRA ARMANDHIKA", nis: "252610298"},
+  {nama: "HARRIS ZALY LUCKY", nis: "252610299"},
+  {nama: "HAVILLAH NURDIANA", nis: "252610300"},
+  {nama: "MOCH PUTRA ALFAREZKY", nis: "252610301"},
+  {nama: "MOHAMAD FADIL ARIEF", nis: "252610302"},
+  {nama: "MOHAMAD SETIAWAN", nis: "252610303"},
+  {nama: "NADINE AFRIDA A", nis: "252610304"},
+  {nama: "NAELATUL APIPAH", nis: "252610305"},
+  {nama: "NATA NUR ROHIM", nis: "252610306"},
+  {nama: "NAYLA AMALIA NUR FADHILA", nis: "252610307"},
+  {nama: "NOVA JOVITA", nis: "252610308"},
+  {nama: "NURUL FADILAH", nis: "252610309"},
+  {nama: "OSA AMELIA", nis: "252610310"},
+  {nama: "PUTRI LIDIA", nis: "252610311"},
+  {nama: "REFA ANGGRAINA", nis: "252610312"},
+  {nama: "REFI DIANSARI", nis: "252610313"},
+  {nama: "REGINA AURELIA", nis: "252610314"},
+  {nama: "RESA", nis: "252610315"},
+  {nama: "REVI MARISCHA ", nis: "252610316"},
+  {nama: "RIANA ", nis: "252610317"},
+  {nama: "ROMAN IBRAHIM", nis: "252610318"},
+  {nama: "SAFANA IFA JUNITA", nis: "252610319"},
+  {nama: "SALIVA", nis: "252610320"},
+  {nama: "SENDY AFRIYANSA", nis: "252610321"},
+  {nama: "SHAKILA TRIANA FAUZIYAH", nis: "252610322"},
+  {nama: "SHELA DWI NURUL", nis: "252610323"},
+  {nama: "SILVIA SEPTIANI", nis: "252610324"},
+  {nama: "SITI KHUZAIMAH", nis: "252610325"},
+  {nama: "SITI KONAAH", nis: "252610326"},
+  {nama: "SITI SYARIFFATUL KHOTIMAH", nis: "252610327"},
+  {nama: "SUCI EKAWATI", nis: "252610328"},
+  {nama: "SURYA ROMI RAMADHAN", nis: "252610329"},
+  {nama: "SYAKA FEBIAN AL VAKAR", nis: "252610330"},
+  {nama: "SYARIFATUN NAJAH", nis: "252610331"},
+  {nama: "VINNA VERISKHA", nis: "252610332"},
+  {nama: "YASMIN RAMADINI", nis: "252610333"}
+            ],
+            "X TKJ 2": [
+  {nama: "AKHMAD AL VANZA PUTRA", nis: "252610097"},
+  {nama: "Alvino Maulana", nis: "252610098"},
+  {nama: "ARDIAN SAPUTRA", nis: "252610099"},
+  {nama: "AURA RAMADHANI", nis: "252610100"},
+  {nama: "BAGAS MAULANA", nis: "252610101"},
+  {nama: "DAFA ALFAH REZA RIYANTO", nis: "252610102"},
+  {nama: "Danar Prayoga", nis: "252610103"},
+  {nama: "DeviMutiarani", nis: "252610104"},
+  {nama: "ESFANDIAR DIMAS RAMADHON", nis: "252610105"},
+  {nama: "EZZAR REDITYA PRATAMA", nis: "252610106"},
+  {nama: "Fahmi Mubarok", nis: "252610107"},
+  {nama: "FAIZ BAHTIAR", nis: "252610108"},
+  {nama: "Ganang rizki", nis: "252610109"},
+  {nama: "GHALY ATAYA RISQI", nis: "252610110"},
+  {nama: "ILHAM NUR AKBAR", nis: "252610111"},
+  {nama: "INDAH PERMATA SARI", nis: "252610112"},
+  {nama: "JERICKO OKTAVIANO HARYANTO", nis: "252610113"},
+  {nama: "KAKA FABIANSKI MILANELLO", nis: "252610114"},
+  {nama: "KEISYAR DEV", nis: "252610115"},
+  {nama: "KEVIN WILIYAM", nis: "252610116"},
+  {nama: "Laela Nurrohmah Ramadhani", nis: "252610117"},
+  {nama: "M.DEVA ARDITIYA IZZA", nis: "252610118"},
+  {nama: "Moch Afrizal Sopian", nis: "252610119"},
+  {nama: "MOHAMAD ANYANUR RIFAI", nis: "252610120"},
+  {nama: "MUHAMAD SAPAR RUDIN", nis: "252610121"},
+  {nama: "MUHAMAD TRI ARDIANSYAH", nis: "252610122"},
+  {nama: "Muhammad Aria Abdurrahman", nis: "252610123"},
+  {nama: "muhammad dwi andika", nis: "252610124"},
+  {nama: "MUHAMMAD FIRDAN SANTOSO", nis: "252610125"},
+  {nama: "Muhammad hakim quthbi muttaqin", nis: "252610126"},
+  {nama: "Muhammad Raffa", nis: "252610127"},
+  {nama: "MUHAMMAD ZAIDAN JOURDAN", nis: "252610128"},
+  {nama: "MUKHAMMAD AKBAR", nis: "252610129"},
+  {nama: "Putri Pratiwi", nis: "252610130"},
+  {nama: "R MOHAMAD NURFAUZAN", nis: "252610131"},
+  {nama: "RADEN IDZHAR AL BARA", nis: "252610132"},
+  {nama: "RAFA AL FATIH", nis: "252610133"},
+  {nama: "RAFASYA NURRIZKY", nis: "252610134"},
+  {nama: "Rafli Agristi", nis: "252610135"},
+  {nama: "Ragil raytama putra", nis: "252610136"},
+  {nama: "Rehan Maulana", nis: "252610137"},
+  {nama: "REVALINA SARAH", nis: "252610138"},
+  {nama: "RIFKY AKHMAD FAUZI", nis: "252610139"},
+  {nama: "SUHENDRI", nis: "252610140"},
+  {nama: "SULTAN WALIED BACHTIAR", nis: "252610141"},
+  {nama: "Tegar Pratama", nis: "252610142"},
+  {nama: "TRIYANTO MULYONO", nis: "252610143"},
+  {nama: "Washifa nur Azzahra", nis: "252610144"}
+            ],
+            "X TKJ 3": [
+  {nama: "ADAM RAFFI", nis: "252610145"},
+  {nama: "AGUSTIN RAMADHAN", nis: "252610146"},
+  {nama: "AHMAD BHAYHAQI NURSUHAJI", nis: "252610147"},
+  {nama: "AL RIDWAN", nis: "252610148"},
+  {nama: "ALLDILAH NOVA JELITA", nis: "252610149"},
+  {nama: "Arif Hidayat", nis: "252610150"},
+  {nama: "BRAMANTYO RIZKY SAPUTRA", nis: "252610151"},
+  {nama: "DENIS ISNABILLY", nis: "252610152"},
+  {nama: "DWI ANDRISTIA", nis: "252610153"},
+  {nama: "Dzaki Septiansyah", nis: "252610154"},
+  {nama: "ELANO FARRAZ FAHMI ALMALIKI", nis: "252610155"},
+  {nama: "Endah Rachmawati", nis: "252610156"},
+  {nama: "FAIZUL AL FAIZ", nis: "252610157"},
+  {nama: "FATIR REFALDO", nis: "252610158"},
+  {nama: "intan fauziyah", nis: "252610159"},
+  {nama: "Irhab hauzan", nis: "252610160"},
+  {nama: "IRSYAD FADHIL ASIDDIQ", nis: "252610161"},
+  {nama: "KEVIN ADITYA TEDJA", nis: "252610162"},
+  {nama: "Kiyan Ahmad galuh", nis: "252610163"},
+  {nama: "M. BENJIRO RAMADHAN", nis: "252610164"},
+  {nama: "MATTHEW ORLANDO", nis: "252610165"},
+  {nama: "Maulid Faqih", nis: "252610166"},
+  {nama: "MOCH. SUTAWIJAYA", nis: "252610167"},
+  {nama: "MOCHAMAD ABRIANSYAH", nis: "252610168"},
+  {nama: "MOCHAMMAD FAUZAN", nis: "252610169"},
+  {nama: "MUHAMMAD ALFIAN ZULFIKAR", nis: "252610170"},
+  {nama: "MUHAMMAD AMRULLAH FATIH", nis: "252610171"},
+  {nama: "MUHAMMAD FAHRI HAMZAH", nis: "252610172"},
+  {nama: "MUHAMMAD FARDAN AFFANDE", nis: "252610173"},
+  {nama: "MUHAMMAD HAFIDZ NUR FADLAN BITIN", nis: "252610174"},
+  {nama: "MUHAMMAD IHSAN FIRDIANSYAH", nis: "252610175"},
+  {nama: "MUHAMMAD RAMDHANY", nis: "252610176"},
+  {nama: "Muhammad Syahrul Ma'arif", nis: "252610177"},
+  {nama: "MUHAMMAD ZIDAN BAIHAQI", nis: "252610178"},
+  {nama: "NAZUA AL KHUMAIRAH", nis: "252610179"},
+  {nama: "PUTRI DWI WULANDARI", nis: "252610180"},
+  {nama: "RAFA ALFATHIER", nis: "252610181"},
+  {nama: "RAFAEL SUHARDI", nis: "252610182"},
+  {nama: "Rafsya dzakwan majiid", nis: "252610183"},
+  {nama: "RIDHO HERYANTO", nis: "252610184"},
+  {nama: "RIZAL", nis: "252610185"},
+  {nama: "RIZQI SUBASTIAN", nis: "252610186"},
+  {nama: "Shantya Dewi", nis: "252610187"},
+  {nama: "SULENI", nis: "252610188"},
+  {nama: "Vino Pratama", nis: "252610189"},
+  {nama: "YULIA ROYANI", nis: "252610190"},
+  {nama: "YUSUF ADE SUFANDI", nis: "252610191"},
+  {nama: "ZULVIA HALIATUSYA’DIAH", nis: "252610192"}
+            ]
+        };
+
+        let currentClass = '';
+        let attendanceData = JSON.parse(localStorage.getItem('attendanceData')) || {};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setCurrentDate();
+            loadKelasSelect();
+        });
+
+        function setCurrentDate() {
+            const today = new Date();
+            const dateString = today.toLocaleDateString('id-ID', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('currentDate').textContent = dateString;
+            
+            // Set date input to today
+            const dateInput = document.getElementById('rekapTanggal');
+            dateInput.value = today.toISOString().split('T')[0];
+        }
+
+        function loadKelasSelect() {
+            const kelasSelect = document.getElementById('kelasSelect');
+            kelasSelect.addEventListener('change', function() {
+                const selectedClass = this.value;
+                if (selectedClass) {
+                    currentClass = selectedClass;
+                    loadStudentTable(selectedClass);
+                    document.getElementById('controlButtons').classList.remove('hidden');
+                    document.getElementById('studentTable').classList.remove('hidden');
+                } else {
+                    document.getElementById('controlButtons').classList.add('hidden');
+                    document.getElementById('studentTable').classList.add('hidden');
+                }
+            });
+        }
+
+        function loadStudentTable(className) {
+            const students = studentsData[className] || [];
+            const tableBody = document.getElementById('studentTableBody');
+            const kelasTitle = document.getElementById('kelasTitle');
+            
+            kelasTitle.textContent = `Daftar Siswa ${className}`;
+            tableBody.innerHTML = '';
+
+            students.forEach((student, index) => {
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50';
+                
+                const attendanceKey = `${className}_${student.nis}_${new Date().toISOString().split('T')[0]}`;
+                const savedAttendance = attendanceData[attendanceKey] || {};
+                
+                row.innerHTML = `
+                    <td class="px-4 py-3">${index + 1}</td>
+                    <td class="px-4 py-3 font-medium">${student.nama}</td>
+                    <td class="px-4 py-3">${student.nis}</td>
+                    <td class="px-4 py-3 text-center">
+                        <input type="radio" name="attendance_${index}" value="hadir" ${savedAttendance.status === 'hadir' ? 'checked' : ''} class="w-4 h-4 text-green-600">
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <input type="radio" name="attendance_${index}" value="izin" ${savedAttendance.status === 'izin' ? 'checked' : ''} class="w-4 h-4 text-yellow-600">
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <input type="radio" name="attendance_${index}" value="sakit" ${savedAttendance.status === 'sakit' ? 'checked' : ''} class="w-4 h-4 text-blue-600">
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <input type="radio" name="attendance_${index}" value="absen" ${savedAttendance.status === 'absen' ? 'checked' : ''} class="w-4 h-4 text-red-600">
+                    </td>
+                    <td class="px-4 py-3">
+                        <input type="text" value="${savedAttendance.keterangan || ''}" placeholder="Keterangan..." class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="keterangan_${index}">
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="deleteStudent('${className}', '${student.nis}')" class="btn-danger text-white px-3 py-1 rounded text-sm hover:scale-105 transition-all duration-300">
+                            Hapus
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function hadirSemua() {
+            const radios = document.querySelectorAll('input[type="radio"][value="hadir"]');
+            radios.forEach(radio => {
+                radio.checked = true;
+            });
+        }
+
+        function saveAbsen() {
+            if (!currentClass) return;
+            
+            const students = studentsData[currentClass] || [];
+            const today = new Date().toISOString().split('T')[0];
+            
+            students.forEach((student, index) => {
+                const attendanceRadios = document.querySelectorAll(`input[name="attendance_${index}"]`);
+                const keteranganInput = document.getElementById(`keterangan_${index}`);
+                
+                let status = '';
+                attendanceRadios.forEach(radio => {
+                    if (radio.checked) {
+                        status = radio.value;
+                    }
+                });
+                
+                const attendanceKey = `${currentClass}_${student.nis}_${today}`;
+                attendanceData[attendanceKey] = {
+                    nama: student.nama,
+                    nis: student.nis,
+                    kelas: currentClass,
+                    tanggal: today,
+                    status: status,
+                    keterangan: keteranganInput.value
+                };
+            });
+            
+            localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
+            showSavedIndicator();
+        }
+
+        function showSavedIndicator() {
+            const indicator = document.getElementById('savedIndicator');
+            indicator.classList.remove('hidden');
+            setTimeout(() => {
+                indicator.classList.add('hidden');
+            }, 3000);
+        }
+
+        function exportToExcel() {
+            if (!currentClass) return;
+            
+            const students = studentsData[currentClass] || [];
+            const today = new Date().toISOString().split('T')[0];
+            
+            const data = [['No', 'Nama Siswa', 'NIS', 'Status', 'Keterangan']];
+            
+            students.forEach((student, index) => {
+                const attendanceKey = `${currentClass}_${student.nis}_${today}`;
+                const attendance = attendanceData[attendanceKey] || {};
+                
+                data.push([
+                    index + 1,
+                    student.nama,
+                    student.nis,
+                    attendance.status || '',
+                    attendance.keterangan || ''
+                ]);
+            });
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, `Absen ${currentClass}`);
+            XLSX.writeFile(wb, `Absen_${currentClass}_${today}.xlsx`);
+        }
+
+        function showPage(page) {
+            const absenPage = document.getElementById('pageAbsen');
+            const rekapPage = document.getElementById('pageRekap');
+            const btnAbsen = document.getElementById('btnAbsen');
+            const btnRekap = document.getElementById('btnRekap');
+            
+            if (page === 'absen') {
+                absenPage.classList.remove('hidden');
+                rekapPage.classList.add('hidden');
+                btnAbsen.className = 'btn-primary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105';
+                btnRekap.className = 'bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105';
+            } else {
+                absenPage.classList.add('hidden');
+                rekapPage.classList.remove('hidden');
+                btnAbsen.className = 'bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105';
+                btnRekap.className = 'btn-primary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105';
+            }
+        }
+
+        function filterRekap() {
+            const kelas = document.getElementById('rekapKelas').value;
+            const tanggal = document.getElementById('rekapTanggal').value;
+            const bulan = document.getElementById('rekapBulan').value;
+            const tableBody = document.getElementById('rekapTableBody');
+            
+            let filteredData = [];
+            
+            Object.keys(attendanceData).forEach(key => {
+                const data = attendanceData[key];
+                let include = true;
+                
+                if (kelas && data.kelas !== kelas) include = false;
+                if (tanggal && data.tanggal !== tanggal) include = false;
+                if (bulan && !data.tanggal.includes(`-${bulan}-`)) include = false;
+                
+                if (include) {
+                    filteredData.push(data);
+                }
+            });
+            
+            tableBody.innerHTML = '';
+            
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                            Tidak ada data yang sesuai dengan filter
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            filteredData.forEach((data, index) => {
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50';
+                
+                const statusColor = {
+                    'hadir': 'text-green-600 font-semibold',
+                    'izin': 'text-yellow-600 font-semibold',
+                    'sakit': 'text-blue-600 font-semibold',
+                    'absen': 'text-red-600 font-semibold'
+                };
+                
+                row.innerHTML = `
+                    <td class="px-4 py-3">${index + 1}</td>
+                    <td class="px-4 py-3 font-medium">${data.nama}</td>
+                    <td class="px-4 py-3">${data.kelas}</td>
+                    <td class="px-4 py-3">${data.nis}</td>
+                    <td class="px-4 py-3 text-center">${new Date(data.tanggal).toLocaleDateString('id-ID')}</td>
+                    <td class="px-4 py-3 text-center ${statusColor[data.status] || ''}">${data.status.toUpperCase()}</td>
+                    <td class="px-4 py-3">${data.keterangan || '-'}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function printRekap() {
+            window.print();
+        }
+
+        function exportRekapToExcel() {
+            const kelas = document.getElementById('rekapKelas').value;
+            const tanggal = document.getElementById('rekapTanggal').value;
+            const bulan = document.getElementById('rekapBulan').value;
+            
+            let filteredData = [];
+            
+            Object.keys(attendanceData).forEach(key => {
+                const data = attendanceData[key];
+                let include = true;
+                
+                if (kelas && data.kelas !== kelas) include = false;
+                if (tanggal && data.tanggal !== tanggal) include = false;
+                if (bulan && !data.tanggal.includes(`-${bulan}-`)) include = false;
+                
+                if (include) {
+                    filteredData.push(data);
+                }
+            });
+            
+            const data = [['No', 'Nama Siswa', 'Kelas', 'NIS', 'Tanggal', 'Status', 'Keterangan']];
+            
+            filteredData.forEach((item, index) => {
+                data.push([
+                    index + 1,
+                    item.nama,
+                    item.kelas,
+                    item.nis,
+                    new Date(item.tanggal).toLocaleDateString('id-ID'),
+                    item.status.toUpperCase(),
+                    item.keterangan || '-'
+                ]);
+            });
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Rekap Kehadiran');
+            
+            const filename = `Rekap_Kehadiran_${kelas || 'Semua_Kelas'}_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, filename);
+        }
+
+        function showAddStudentModal() {
+            document.getElementById('addStudentModal').classList.remove('hidden');
+        }
+
+        function closeAddStudentModal() {
+            document.getElementById('addStudentModal').classList.add('hidden');
+            document.getElementById('newStudentName').value = '';
+            document.getElementById('newStudentNIS').value = '';
+            document.getElementById('newStudentClass').value = '';
+        }
+
+        function addNewStudent() {
+            const nama = document.getElementById('newStudentName').value.trim();
+            const nis = document.getElementById('newStudentNIS').value.trim();
+            const kelas = document.getElementById('newStudentClass').value;
+            
+            if (!nama || !nis || !kelas) {
+                alert('Mohon lengkapi semua data siswa!');
+                return;
+            }
+            
+            if (!studentsData[kelas]) {
+                studentsData[kelas] = [];
+            }
+            
+            // Check if NIS already exists
+            const existingStudent = studentsData[kelas].find(student => student.nis === nis);
+            if (existingStudent) {
+                alert('NIS sudah ada di kelas ini!');
+                return;
+            }
+            
+            studentsData[kelas].push({nama, nis});
+            
+            // Refresh table if current class matches
+            if (currentClass === kelas) {
+                loadStudentTable(kelas);
+            }
+            
+            closeAddStudentModal();
+            alert('Siswa berhasil ditambahkan!');
+        }
+
+        function deleteStudent(className, nis) {
+            if (confirm('Yakin ingin menghapus siswa ini?')) {
+                studentsData[className] = studentsData[className].filter(student => student.nis !== nis);
+                
+                // Remove attendance data for this student
+                Object.keys(attendanceData).forEach(key => {
+                    if (key.includes(`${className}_${nis}_`)) {
+                        delete attendanceData[key];
+                    }
+                });
+                
+                localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
+                
+                if (currentClass === className) {
+                    loadStudentTable(className);
+                }
+                
+                alert('Siswa berhasil dihapus!');
+            }
+        }
+
+        function showImportModal() {
+            document.getElementById('importModal').classList.remove('hidden');
+        }
+
+        function closeImportModal() {
+            document.getElementById('importModal').classList.add('hidden');
+            document.getElementById('excelFile').value = '';
+        }
+
+        function importFromExcel() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Pilih file Excel terlebih dahulu!');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                    
+                    // Skip header row
+                    const rows = jsonData.slice(1);
+                    let importCount = 0;
+                    
+                    rows.forEach(row => {
+                        if (row.length >= 3) {
+                            const nama = row[0]?.toString().trim();
+                            const nis = row[1]?.toString().trim();
+                            const kelas = row[2]?.toString().trim();
+                            
+                            if (nama && nis && kelas) {
+                                if (!studentsData[kelas]) {
+                                    studentsData[kelas] = [];
+                                }
+                                
+                                // Check if NIS already exists
+                                const existingStudent = studentsData[kelas].find(student => student.nis === nis);
+                                if (!existingStudent) {
+                                    studentsData[kelas].push({nama, nis});
+                                    importCount++;
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Refresh table if needed
+                    if (currentClass && studentsData[currentClass]) {
+                        loadStudentTable(currentClass);
+                    }
+                    
+                    closeImportModal();
+                    alert(`Berhasil mengimpor ${importCount} siswa!`);
+                    
+                } catch (error) {
+                    alert('Error membaca file Excel. Pastikan format file sesuai petunjuk!');
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96b5546f5238c0de',t:'MTc1NDU1NDU2NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
